@@ -1,0 +1,8 @@
+.build/
+.swiftpm/
+DerivedData/
+
+Komo.app/
+Komo-installable.zip
+
+.DS_Store
