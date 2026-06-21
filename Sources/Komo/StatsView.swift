@@ -80,16 +80,8 @@ struct StatsView: View {
             HStack(spacing: 6) {
                 sectionHeader("KEYS")
                 Spacer()
-                if data.totalKeys > 0, let key = hoveredKey {
-                    let c = data.keyCounts[key] ?? 0
-                    Text("\(key) · \(grouped(c)) press\(c == 1 ? "" : "es")")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color.komoBrand)
-                        .monospacedDigit()
-                        .transition(.opacity)
-                }
+                hoverKeySummary
             }
-            .animation(.snappy(duration: 0.12), value: hoveredKey)
             if data.totalKeys == 0 {
                 emptyKeys
             } else {
@@ -97,6 +89,19 @@ struct StatsView: View {
                 HeatLegend(maxCount: data.keyCounts.values.max() ?? 0)
             }
         }
+    }
+
+    private var hoverKeySummary: some View {
+        let key = hoveredKey ?? "Space"
+        let c = hoveredKey.map { data.keyCounts[$0] ?? 0 } ?? 0
+        return Text("\(key) · \(grouped(c)) press\(c == 1 ? "" : "es")")
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundStyle(Color.komoBrand)
+            .monospacedDigit()
+            .lineLimit(1)
+            .frame(minWidth: 132, minHeight: 16, alignment: .trailing)
+            .opacity(data.totalKeys > 0 && hoveredKey != nil ? 1 : 0)
+            .animation(.snappy(duration: 0.12), value: hoveredKey)
     }
 
     private var keyboardHeatmap: some View {
