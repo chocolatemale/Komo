@@ -68,6 +68,36 @@ tccutil reset ListenEvent uk.icoco.komo
 To **distribute to other Macs**, create a *Developer ID Application* certificate
 in the Apple Developer portal, then build (it's auto-detected) and notarize.
 
+## Public release
+
+For public downloads outside the Mac App Store, use the Apple Developer
+**Developer ID + notarization** flow. Komo intentionally ships as Apple
+Silicon-only.
+
+One-time setup:
+
+1. Create and install a **Developer ID Application** certificate from Apple
+   Developer.
+2. Create an Apple ID app-specific password.
+3. Store notarization credentials in Keychain:
+
+```bash
+xcrun notarytool store-credentials "komo-notary" \
+  --apple-id "YOUR_APPLE_ID_EMAIL" \
+  --team-id "YOUR_TEAM_ID" \
+  --password "APP_SPECIFIC_PASSWORD"
+```
+
+Release:
+
+```bash
+./release.sh
+```
+
+The script builds arm64, signs with Developer ID, creates
+`dist/Komo-arm64.dmg`, submits it to Apple notarization, staples the ticket, and
+runs a Gatekeeper assessment. Upload that DMG to the GitHub Release.
+
 ## Launch at login
 
 Toggle **Launch at login** in the footer (uses `SMAppService`). A stats tracker
