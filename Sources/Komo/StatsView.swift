@@ -118,6 +118,8 @@ struct StatsView: View {
                 .padding(.leading, KeyCodeMap.rowOffsets[idx])
             }
         }
+        .frame(width: KeyCodeMap.keyboardWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var emptyKeys: some View {

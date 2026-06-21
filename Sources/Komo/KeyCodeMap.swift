@@ -35,6 +35,9 @@ enum KeyCodeMap {
         ["Space"]
     ]
 
-    /// Per-row leading offset that mimics a real keyboard's stagger.
-    static let rowOffsets: [Double] = [0, 0, 16, 38, 84]
+    /// Width of the widest heat-map row: 10 keys * 28pt + 9 gaps * 4pt.
+    static let keyboardWidth: Double = 316
+
+    /// Per-row leading offset that centers each shorter row within `keyboardWidth`.
+    static let rowOffsets: [Double] = [0, 0, 16, 48, 94]
 }
