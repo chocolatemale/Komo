@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Komo - Tiny open-source input stats for Mac</title>
+  <meta name="description" content="Komo is an open-source macOS menu-bar app that counts keyboard, mouse click, and mouse travel stats locally.">
+  <meta property="og:title" content="Komo">
+  <meta property="og:description" content="Tiny open-source input stats for Apple Silicon Macs. Counts only, stored locally.">
+  <meta property="og:image" content="assets/komo-light.png">
+  <meta name="theme-color" content="#2f6fff">
+  <link rel="icon" href="assets/komo-icon.png">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17191f;
+      --muted: #5f6570;
+      --soft: #eef3ff;
+      --line: #dbe4f4;
+      --brand: #2f6fff;
+      --brand-2: #ff6a3d;
+      --card: #ffffff;
+      --shadow: 0 24px 80px rgba(29, 58, 115, 0.16);
+      font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(47, 111, 255, 0.18), transparent 28rem),
+        radial-gradient(circle at 88% 10%, rgba(255, 106, 61, 0.14), transparent 24rem),
+        linear-gradient(180deg, #f8fbff 0%, #ffffff 52%, #f5f8ff 100%);
+    }
+
+    a { color: inherit; }
+    .wrap {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 28px 0;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 850;
+      font-size: 22px;
+      text-decoration: none;
+    }
+
+    .brand img { width: 36px; height: 36px; border-radius: 9px; }
+    nav { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; font-weight: 700; }
+    nav a { text-decoration: none; }
+    nav a:hover { color: var(--brand); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+      gap: 58px;
+      align-items: center;
+      padding: 44px 0 70px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      backdrop-filter: blur(14px);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #26c55f;
+      box-shadow: 0 0 0 5px rgba(38, 197, 95, 0.12);
+    }
+
+    h1 {
+      margin: 22px 0 18px;
+      max-width: 760px;
+      font-size: clamp(48px, 8vw, 92px);
+      line-height: 0.93;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 660px;
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 20px;
+      border-radius: 13px;
+      text-decoration: none;
+      font-weight: 850;
+      border: 1px solid transparent;
+    }
+
+    .primary {
+      color: #fff;
+      background: var(--brand);
+      box-shadow: 0 14px 30px rgba(47, 111, 255, 0.28);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: #fff;
+      border-color: var(--line);
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .product {
+      position: relative;
+      min-height: 620px;
+    }
+
+    .window {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: min(100%, 420px);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      background: #fff;
+      overflow: hidden;
+      transform: rotate(-2deg);
+    }
+
+    .window.dark {
+      top: 105px;
+      left: 68px;
+      transform: rotate(3deg);
+      opacity: 0.95;
+    }
+
+    .window img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .section {
+      padding: 70px 0;
+    }
+
+    .section h2 {
+      margin: 0 0 14px;
+      font-size: 38px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .section > p,
+    .section-head p {
+      max-width: 690px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      padding: 22px;
+      box-shadow: 0 12px 34px rgba(29, 58, 115, 0.08);
+    }
+
+    .card b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .privacy {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 24px;
+      align-items: stretch;
+      padding: 30px;
+      border-radius: 18px;
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .privacy p { color: rgba(255, 255, 255, 0.72); }
+    .checklist {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      font-weight: 750;
+    }
+
+    .install {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      counter-reset: step;
+      margin-top: 28px;
+    }
+
+    .step {
+      position: relative;
+      padding-top: 58px;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--brand);
+      font-weight: 900;
+    }
+
+    footer {
+      padding: 34px 0 44px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    footer .wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      border-top: 1px solid var(--line);
+      padding-top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .hero, .privacy { grid-template-columns: 1fr; }
+      .product { min-height: 700px; }
+      .window { width: min(88vw, 420px); }
+      .window.dark { left: 38px; }
+      .grid, .install { grid-template-columns: 1fr; }
+      nav { display: none; }
+    }
+
+    @media (max-width: 560px) {
+      .wrap { width: min(100% - 28px, 1120px); }
+      header { padding: 20px 0; }
+      .hero { gap: 28px; padding-top: 26px; }
+      h1 { font-size: 48px; }
+      .lede { font-size: 18px; }
+      .product { min-height: 590px; }
+      .window { width: min(86vw, 420px); }
+      .window.dark { top: 80px; left: 18px; }
+      footer .wrap { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <a class="brand" href="#">
+      <img src="assets/komo-icon.png" alt="Komo app icon">
+      <span>Komo</span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/chocolatemale/Komo">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div>
+        <span class="pill"><span class="dot"></span> Open source · Apple Silicon Mac</span>
+        <h1>Your keyboard, as a tiny weather map.</h1>
+        <p class="lede">Komo is a playful menu-bar tracker for macOS. It counts keystrokes, clicks, and mouse travel locally, then turns your day into a clean little heat map.</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/chocolatemale/Komo/releases/latest/download/Komo-arm64.dmg">Download for Mac</a>
+          <a class="button secondary" href="https://github.com/chocolatemale/Komo">View source</a>
+        </div>
+        <div class="note">Free, open source, notarized Developer ID build. Requires macOS 14+ on Apple Silicon.</div>
+      </div>
+
+      <div class="product" aria-label="Komo app screenshots">
+        <div class="window dark"><img src="assets/komo-dark.png" alt="Komo dark mode screenshot"></div>
+        <div class="window"><img src="assets/komo-light.png" alt="Komo light mode screenshot"></div>
+      </div>
+    </section>
+
+    <section class="section wrap">
+      <div class="section-head">
+        <h2>Useful stats, without turning into surveillance.</h2>
+        <p>Komo records counts, not content. It never stores what you typed, only how many times each visible key was pressed.</p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <b>Keyboard heat map</b>
+          <p>A-Z, 0-9, and Space glow by usage. Unknown keys are ignored so the headline stays honest.</p>
+        </article>
+        <article class="card">
+          <b>Mouse rhythm</b>
+          <p>Left clicks, right clicks, and approximate travel distance update quietly from the menu bar.</p>
+        </article>
+        <article class="card">
+          <b>Today and all-time</b>
+          <p>Flip between your current day and all-time totals, with yesterday comparison built in.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="privacy" class="section wrap">
+      <div class="privacy">
+        <div>
+          <h2>Local by design.</h2>
+          <p>No accounts. No cloud sync. No analytics. Your stats live in a JSON file on your Mac.</p>
+        </div>
+        <ul class="checklist">
+          <li>Counts only, never typed text</li>
+          <li>Open-source Swift code</li>
+          <li>Input Monitoring permission is explained in-app</li>
+          <li>Signed and notarized for public download</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="install" class="section wrap">
+      <div class="section-head">
+        <h2>Install in under a minute.</h2>
+        <p>Download the DMG, drag Komo to Applications, then grant Input Monitoring when you want keyboard stats. Mouse stats work immediately.</p>
+      </div>
+      <div class="install">
+        <article class="card step">
+          <b>Download</b>
+          <p>Grab the latest Apple Silicon DMG from GitHub Releases.</p>
+        </article>
+        <article class="card step">
+          <b>Drag to Applications</b>
+          <p>Open the DMG and move Komo into your Applications folder.</p>
+        </article>
+        <article class="card step">
+          <b>Grant permission</b>
+          <p>Enable Input Monitoring to count keys. Komo never reads typed content.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Komo is free and open source.</span>
+      <span><a href="https://github.com/chocolatemale/Komo">GitHub</a> · <a href="https://github.com/chocolatemale/Komo/releases/latest">Releases</a></span>
+    </div>
+  </footer>
+</body>
+</html>
