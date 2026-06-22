@@ -1,5 +1,12 @@
 # Komo
 
+**Open-source input stats for Apple Silicon Macs.**
+
+[Download for Mac](https://github.com/chocolatemale/Komo/releases/latest/download/Komo-arm64.dmg)
+· [Landing page](https://chocolatemale.github.io/Komo/)
+· [Source code](https://github.com/chocolatemale/Komo)
+· [MIT License](LICENSE)
+
 A tiny macOS **menu-bar** app that quietly counts how you use your keyboard and
 mouse. Click the status-bar icon to see:
 
@@ -31,9 +38,9 @@ open Komo.app              # or drag it to /Applications
 ```
 
 `build.sh` produces a double-clickable, signed `Komo.app` plus
-`Komo-installable.zip`, which another Mac user can unzip and drag to
-Applications. To regenerate the app icon (already committed as
-`Resources/Komo.icns`):
+`Komo-installable.zip`, which is handy for local testing. Public releases use
+the notarized DMG from `./release.sh`. To regenerate the app icon (already
+committed as `Resources/Komo.icns`):
 
 ```bash
 ./Tools/gen_icon.sh
