@@ -15,7 +15,11 @@ mouse. Click the status-bar icon to see:
   your most-used keys glow hottest.
 - **Left & right mouse clicks.**
 - **Mouse travel distance**, converted to real-world cm / m / km.
-- A **Today / All-time** toggle, with a "▲ vs. yesterday" trend.
+  Point at any mouse tile and the trend chart below it switches to that series.
+- A **Today / All-time** toggle, with a "▲ vs. yesterday" delta.
+- **14-bar trend charts** — one under the headline for keystrokes, one under
+  the mouse tiles for whichever mouse stat you point at. The last 14 days on
+  *Today*, the last 14 weeks on *All-time*; hover a bar for that bucket's count.
 
 Komo only ever stores **counts** — never *which* keys you pressed in what order.
 It is a statistics toy, not a keylogger. All data stays in a local JSON file.
@@ -130,6 +134,8 @@ Sources/Komo/
   InputMonitor.swift   CGEventTap (keyboard) + NSEvent (mouse) → counts
   StatsStore.swift     Counters, per-day JSON persistence, incremental all-time aggregate
   StatsView.swift      The popover UI (heat-map, tiles, controls)
+  TrendChart.swift     Keystrokes-over-time bar chart (days / weeks)
+  Formatting.swift     Shared number formatting
   HeatColor.swift      Heat-map color ramp + legend gradient
   KeyCodeMap.swift     ANSI keycode → label, heat-map layout
   PermissionHelper.swift  Input Monitoring detection / request

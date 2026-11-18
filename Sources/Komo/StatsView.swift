@@ -15,6 +15,10 @@ struct StatsView: View {
     @State private var scope: Scope = .today
     @State private var confirmingReset = false
     @State private var hoveredKey: String?
+    // Sticky rather than momentary: the pointer has to leave the tiles to
+    // reach the chart below them, so clearing on exit would make the Right and
+    // Travel series impossible to inspect.
+    @State private var mouseMetric: TrendMetric = .leftClicks
 
     private var data: DayStats {
         scope == .today ? store.today : store.allTime
@@ -24,7 +28,7 @@ struct StatsView: View {
         VStack(alignment: .leading, spacing: 16) {
             header
             if !permissions.hasInputMonitoring { permissionBanner }
-            headline
+            overview
             keysSection
             mouseSection
             footer
@@ -50,6 +54,17 @@ struct StatsView: View {
             }
             Spacer()
             ScopeToggle(scope: $scope)
+        }
+    }
+
+    /// The headline number and the trend that explains it read as one block,
+    /// so they sit closer together than the popover's other sections.
+    private var overview: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            headline
+            if store.allTime.totalKeys > 0 {
+                TrendChart(points: store.trend(.keys, span: trendSpan), span: trendSpan, metric: .keys)
+            }
         }
     }
 
@@ -136,16 +151,26 @@ struct StatsView: View {
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.04)))
     }
 
+    /// The tiles double as the chart's selector: point at one and the trend
+    /// underneath switches to it, with the tile lit so it is never a mystery
+    /// which series is on screen.
     private var mouseSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionHeader("MOUSE")
             HStack(spacing: 8) {
                 StatTile(icon: "cursorarrow.click", title: "Left",
-                         value: abbreviated(data.leftClicks), full: grouped(data.leftClicks))
+                         value: abbreviated(data.leftClicks), full: grouped(data.leftClicks),
+                         active: mouseMetric == .leftClicks) { mouseMetric = .leftClicks }
                 StatTile(icon: "contextualmenu.and.cursorarrow", title: "Right",
-                         value: abbreviated(data.rightClicks), full: grouped(data.rightClicks))
+                         value: abbreviated(data.rightClicks), full: grouped(data.rightClicks),
+                         active: mouseMetric == .rightClicks) { mouseMetric = .rightClicks }
                 StatTile(icon: "arrow.up.and.down.and.arrow.left.and.right", title: "Travel",
-                         value: distanceText, full: "≈ \(distanceText) (approximate)")
+                         value: distanceText, full: "≈ \(distanceText) (approximate)",
+                         active: mouseMetric == .travel) { mouseMetric = .travel }
+            }
+            if hasMouseHistory {
+                TrendChart(points: store.trend(mouseMetric, span: trendSpan), span: trendSpan,
+                           metric: mouseMetric, plotHeight: 30)
             }
         }
     }
@@ -248,12 +273,14 @@ struct StatsView: View {
         return store.today.totalKeys - store.yesterdayKeys >= 0 ? .green : .orange
     }
 
-    private var distanceText: String {
-        let meters = ScreenMetric.meters(fromPoints: data.mouseDistancePoints)
-        if meters < 1 { return String(format: "%.0f cm", meters * 100) }
-        if meters < 1000 { return String(format: "%.1f m", meters) }
-        return String(format: "%.2f km", meters / 1000)
+    private var trendSpan: TrendSpan { scope == .today ? .day : .week }
+
+    private var hasMouseHistory: Bool {
+        store.allTime.leftClicks > 0 || store.allTime.rightClicks > 0
+            || store.allTime.mouseDistancePoints > 0
     }
+
+    private var distanceText: String { Komo.distanceText(points: data.mouseDistancePoints) }
 }
 
 // MARK: - Components
@@ -344,6 +371,8 @@ private struct StatTile: View {
     let title: String
     let value: String
     var full: String? = nil
+    var active = false
+    var onSelect: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 4) {
@@ -361,7 +390,17 @@ private struct StatTile: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 11)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.05)))
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(active ? Color.komoBrand.opacity(0.12) : Color.primary.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.komoBrand.opacity(active ? 0.4 : 0), lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .onHover { if $0 { onSelect?() } }
+        .animation(.snappy(duration: 0.15), value: active)
         .help(full ?? value)
     }
 }
@@ -406,22 +445,5 @@ private struct FooterButton: View {
         .buttonStyle(.plain)
         .foregroundStyle(.secondary)
         .onHover { hover = $0 }
-    }
-}
-
-// MARK: - Formatting
-
-private func grouped(_ n: Int) -> String {
-    let f = NumberFormatter()
-    f.numberStyle = .decimal
-    return f.string(from: NSNumber(value: n)) ?? "\(n)"
-}
-
-private func abbreviated(_ n: Int) -> String {
-    switch n {
-    case 1_000_000...: return String(format: "%.2fM", Double(n) / 1_000_000)
-    case 100_000...:   return String(format: "%.0fk", Double(n) / 1_000)
-    case 10_000...:    return String(format: "%.1fk", Double(n) / 1_000)
-    default:           return grouped(n)
     }
 }
